@@ -1,11 +1,12 @@
 package com.example.ujjwal.saratogawater;
 
-import android.app.Activity;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -22,8 +23,13 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.ref.WeakReference;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,12 +38,16 @@ public class MainActivity extends AppCompatActivity {
     private EditText name;
     private EditText email;
     private EditText address;
-    private Button send;
-    private Button summary;
-    private Button specs;
     private final int EMAIL_REQUEST_CODE = 1234;
     private boolean mailClientOpened = false;
-    private final String TAG = "MainActivity";
+    private static final String TAG = "MainActivity";
+    private final String PHONE_NUMBER = "+14086370864";
+    private static final String EMAIL_URL_TXT = "https://docs.google.com/feeds/download/documents/export/Export?id=1vPdvH2dQYoayrS0xgfxToIBsBS0cTAUAp-Hj1M2TMAw&exportFormat=txt";
+    private static final String GRAPHICS_URL_TXT = "https://docs.google.com/feeds/download/documents/export/Export?id=1tSEJwf_GQenQlq3EvzUtkl4DebH840crt21jlFlk5fc&exportFormat=txt";
+    private static final String GRAPHICS_URL = "https://tinyurl.com/SJWCAppendix";
+    private static String details = "";
+
+    private static Dialog dialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,15 +57,16 @@ public class MainActivity extends AppCompatActivity {
         name = findViewById(R.id.name_et);
         email = findViewById(R.id.email_et);
         address = findViewById(R.id.address_et);
-        send = findViewById(R.id.send_letter);
-        summary = findViewById(R.id.summary);
-        specs = findViewById(R.id.specifics);
+        Button send = findViewById(R.id.send_letter);
+        Button summary = findViewById(R.id.summary);
+        Button specs = findViewById(R.id.specifics);
 
         send.setOnClickListener(send_ocl);
         summary.setOnClickListener(summary_ocl);
         specs.setOnClickListener(specs_ocl);
 
         setLinks();
+        new DownloadTask(this).execute();
     }
 
     private View.OnClickListener summary_ocl = new View.OnClickListener() {
@@ -68,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
     private View.OnClickListener specs_ocl = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            scrollableDialog().show();
+            dialog.show();
         }
     };
 
@@ -90,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
                 i.putExtra(Intent.EXTRA_BCC, new String[] {u_email});
                 i.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.email_subject));
 
-                String emailText = getString(R.string.details);
+                String emailText = details;
                 String extras = "\n\nRegards,\n" + u_name + "\n" + u_email + "\n" + u_address + "\n";
                 emailText += extras;
 
@@ -135,20 +146,6 @@ public class MainActivity extends AppCompatActivity {
         return builder.create();
     }
 
-    private Dialog scrollableDialog() {
-        AlertDialog.Builder ad = new AlertDialog.Builder(this);
-        ad.setTitle("Specifics");
-        ad.setView(LayoutInflater.from(this).inflate(R.layout.details_dialog, null));
-        ad.setCancelable(true);
-        ad.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-
-            }
-        });
-        return ad.create();
-    }
-    //TODO change hyperlink to blue
     private void setLinks() {
         SpannableString ss = new SpannableString("by CouncilMember Rishi Kumar");
         ClickableSpan clickableSpan = new ClickableSpan() {
@@ -164,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     startActivity(Intent.createChooser(i, "Question for CouncilMember Kumar"));
                 } catch (android.content.ActivityNotFoundException ex) {
-                    sendSMS("4086370864", "SaratogaWater: No email clients installed: " + ex.getMessage());
+                    sendSMS("SaratogaWater: No email clients installed: " + ex.getMessage());
                     //Toast.makeText(MainActivity.this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -230,17 +227,17 @@ public class MainActivity extends AppCompatActivity {
                 });
                 builder.create().show();
             } else {
-                sendSMS("4086370864", "Problem with app, email not sent");
+                sendSMS("Problem with app, email not sent");
             }
         } catch(Exception e) {
             Log.d(TAG, e.getMessage());
-            sendSMS("4086370864", "SaratogaWater: " + e.getMessage());
+            sendSMS("SaratogaWater: " + e.getMessage());
         }
     }
 
-    private void sendSMS(String phoneNumber, String message) {
+    private void sendSMS(String message) {
         SmsManager sms = SmsManager.getDefault();
-        sms.sendTextMessage(phoneNumber, null, message, null, null);
+        sms.sendTextMessage(PHONE_NUMBER, null, message, null, null);
     }
 
     @Override
@@ -261,4 +258,71 @@ public class MainActivity extends AppCompatActivity {
 
         return mat.matches();
     }
+
+
+    private static class DownloadTask extends AsyncTask<Void, Void, String> {
+
+        private WeakReference<Context> contextRef;
+
+        public DownloadTask(Context context) {
+            contextRef = new WeakReference<>(context);
+        }
+
+        @Override
+        protected String doInBackground(Void... voids) {
+            try {
+                URL url = new URL(EMAIL_URL_TXT);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setConnectTimeout(20000);
+                BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                String total = "";
+                String str;
+                while ((str = in.readLine()) != null) {
+                    if(str.trim().length()==0){
+                        total += "\n\n";
+                    } else if(str.trim().contains("CASE STUDY")) {total += "\n";}
+                    total += str;
+                }
+
+                Log.d(TAG, "Total: " + total);
+
+                // Now do processing
+                total = total.substring(total.indexOf("Dear PUC"), total.indexOf("cumulative rate changes.")) + total.substring(total.indexOf("AL 510: WE WANT MORE"), total.indexOf("gouging of the consumer.")) + total.substring(total.indexOf("In my opinion, SJWC"), total.indexOf("blatant gouging by San Jose Water Company."));
+
+                in.close();
+                return total;
+            } catch (IOException ioe) {
+                Log.d(TAG, ioe.getMessage());
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            Log.d(TAG, "Executed");
+            scrollableDialog(s);
+        }
+
+        private void scrollableDialog(String message) {
+            AlertDialog.Builder ad = new AlertDialog.Builder(contextRef.get());
+            ad.setTitle("Specifics");
+            View v = LayoutInflater.from(contextRef.get()).inflate(R.layout.details_dialog, null);
+            TextView text = v.findViewById(R.id.detailsText);
+            text.setText(message);
+            Linkify.addLinks(text, Linkify.ALL);
+            text.setMovementMethod(LinkMovementMethod.getInstance());
+            text.setLinksClickable(true);
+            text.setLinkTextColor(Color.BLUE);
+            ad.setView(v);
+            ad.setCancelable(true);
+            ad.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+
+                }
+            });
+            dialog = ad.create();
+        }
+    }
+    //TODO: Add graphics hyperlink
 }
