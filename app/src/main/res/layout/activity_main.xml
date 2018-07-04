@@ -38,7 +38,7 @@
         android:layout_height="24dp"
         android:gravity="center"
         android:text="by Councilmember Rishi Kumar"
-        android:textSize="20sp"
+        android:textSize="19sp"
         app:layout_constraintTop_toBottomOf="@+id/bar" />
 
     <EditText
@@ -87,6 +87,8 @@
         android:layout_marginTop="10dp"
         android:text="Click To Send"
         android:textSize="22sp"
+        android:background="@drawable/rounded_button"
+        android:elevation="10dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"

@@ -148,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
         });
         return ad.create();
     }
-    // Button Send make rounded, 3D Shadow TODO, Increase font size Summary, Details, change hyperlink to blue
+    //TODO change hyperlink to blue
     private void setLinks() {
         SpannableString ss = new SpannableString("by CouncilMember Rishi Kumar");
         ClickableSpan clickableSpan = new ClickableSpan() {
@@ -171,6 +171,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void updateDrawState(TextPaint ds) {
                 super.updateDrawState(ds);
+                ds.setColor(Color.BLUE);
                 ds.setUnderlineText(true);
             }
         };
@@ -208,6 +209,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void updateDrawState(TextPaint ds) {
                         super.updateDrawState(ds);
+                        ds.setColor(Color.BLUE);
                         ds.setUnderlineText(true);
                     }
                 };
