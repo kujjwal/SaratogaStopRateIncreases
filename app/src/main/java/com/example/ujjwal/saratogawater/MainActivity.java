@@ -300,6 +300,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String s) {
             Log.d(TAG, "Executed");
+            details = s;
             scrollableDialog(s);
         }
 
@@ -309,7 +310,7 @@ public class MainActivity extends AppCompatActivity {
             View v = LayoutInflater.from(contextRef.get()).inflate(R.layout.details_dialog, null);
             TextView text = v.findViewById(R.id.detailsText);
             text.setText(message);
-            Linkify.addLinks(text, Linkify.ALL);
+            Linkify.addLinks(text, Linkify.WEB_URLS);
             text.setMovementMethod(LinkMovementMethod.getInstance());
             text.setLinksClickable(true);
             text.setLinkTextColor(Color.BLUE);
