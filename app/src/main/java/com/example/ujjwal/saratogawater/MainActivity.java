@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -40,12 +39,11 @@ public class MainActivity extends AppCompatActivity {
     private EditText address;
     private final int EMAIL_REQUEST_CODE = 1234;
     private boolean mailClientOpened = false;
-    private static final String TAG = "MainActivity";
-    private final String PHONE_NUMBER = "+14086370864";
+    private static final String PHONE_NUMBER = "+14086370864";
     private static final String EMAIL_URL_TXT = "https://docs.google.com/feeds/download/documents/export/Export?id=1vPdvH2dQYoayrS0xgfxToIBsBS0cTAUAp-Hj1M2TMAw&exportFormat=txt";
-    private static final String GRAPHICS_URL_TXT = "https://docs.google.com/feeds/download/documents/export/Export?id=1tSEJwf_GQenQlq3EvzUtkl4DebH840crt21jlFlk5fc&exportFormat=txt";
-    private static final String GRAPHICS_URL = "https://tinyurl.com/SJWCAppendix";
     private static String details = "";
+    private static String summary_docs = "";
+    private static String success_docs = "";
 
     private static Dialog dialog;
 
@@ -72,7 +70,17 @@ public class MainActivity extends AppCompatActivity {
     private View.OnClickListener summary_ocl = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            alertUser(R.string.summary).show();
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            builder.setMessage(summary_docs);
+            builder.setTitle("Summary");
+            builder.setCancelable(true);
+            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+
+                }
+            });
+            builder.create().show();
         }
     };
 
@@ -147,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setLinks() {
-        SpannableString ss = new SpannableString("by CouncilMember Rishi Kumar");
+        SpannableString ss = new SpannableString("by Councilmember Rishi Kumar");
         ClickableSpan clickableSpan = new ClickableSpan() {
             @Override
             public void onClick(View textView) {
@@ -159,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
                 i.putExtra(Intent.EXTRA_SUBJECT, "Saratoga Water App FAQ");
                 i.putExtra(Intent.EXTRA_TEXT   , "Question: ");
                 try {
-                    startActivity(Intent.createChooser(i, "Question for CouncilMember Kumar"));
+                    startActivity(Intent.createChooser(i, "Question for Councilmember Kumar"));
                 } catch (android.content.ActivityNotFoundException ex) {
                     sendSMS("SaratogaWater: No email clients installed: " + ex.getMessage());
                     //Toast.makeText(MainActivity.this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
@@ -194,29 +202,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         try {
             if (requestCode == EMAIL_REQUEST_CODE && mailClientOpened) {
-                Log.d(TAG, "Passed");
-                SpannableString ss = new SpannableString("Thanks for your submission!\nYour complaint has been recorded. Please sign this petition to show your support");
-                ClickableSpan clickableSpan = new ClickableSpan() {
-                    @Override
-                    public void onClick(View textView) {
-                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.tinyurl.com/noMoreSJWC"));
-                        startActivity(browserIntent);
-                    }
-
-                    @Override
-                    public void updateDrawState(TextPaint ds) {
-                        super.updateDrawState(ds);
-                        ds.setColor(Color.BLUE);
-                        ds.setUnderlineText(true);
-                    }
-                };
-                ss.setSpan(clickableSpan, ss.toString().indexOf("this"), ss.toString().indexOf("this") + 14, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
                 View v = LayoutInflater.from(this).inflate(R.layout.petition_dialog, null);
                 TextView textView = v.findViewById(R.id.petition_text);
-                textView.setText(ss);
+                textView.setText(success_docs);
+                Linkify.addLinks(textView, Linkify.WEB_URLS);
+                textView.setLinkTextColor(Color.BLUE);
                 textView.setMovementMethod(LinkMovementMethod.getInstance());
                 textView.setHighlightColor(Color.TRANSPARENT);
+
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(this).setTitle("Success!").setCancelable(true).setView(v);
                 builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -230,12 +223,11 @@ public class MainActivity extends AppCompatActivity {
                 sendSMS("Problem with app, email not sent");
             }
         } catch(Exception e) {
-            Log.d(TAG, e.getMessage());
             sendSMS("SaratogaWater: " + e.getMessage());
         }
     }
 
-    private void sendSMS(String message) {
+    private static void sendSMS(String message) {
         SmsManager sms = SmsManager.getDefault();
         sms.sendTextMessage(PHONE_NUMBER, null, message, null, null);
     }
@@ -267,7 +259,7 @@ public class MainActivity extends AppCompatActivity {
         public DownloadTask(Context context) {
             contextRef = new WeakReference<>(context);
         }
-
+        //TODO: Format numbered list
         @Override
         protected String doInBackground(Void... voids) {
             try {
@@ -280,33 +272,44 @@ public class MainActivity extends AppCompatActivity {
                 while ((str = in.readLine()) != null) {
                     if(str.trim().length()==0){
                         total += "\n\n";
-                    } else if(str.trim().contains("CASE STUDY")) {total += "\n";}
+                    } else if(str.trim().contains("CASE STUDY")) {
+                        total += "\n";
+                    }
+                    if(str.trim().contains("*")) {
+                        str = str.substring(0, str.indexOf("*")) + "\n\t" + str.substring(str.indexOf("*"));
+                    }
+                    if(str.trim().contains("·")) {
+                        str = str.substring(0, str.indexOf("·")) + "\n\t" + str.substring(str.indexOf("·"));
+                    }/*
+                    if(str.trim().contains(":")) {
+                        str = str.substring(0, str.indexOf(":")) + "\n" + str.substring(str.indexOf(":"));
+                    }*/
+                    /*if(str.trim().contains("."))*/ //TODO: Find regex for this
                     total += str;
                 }
 
-                Log.d(TAG, "Total: " + total);
-
+                summary_docs = total.substring(total.indexOf("SUMMARY") + 17, total.indexOf("SUCCESS")).trim();
+                success_docs = total.substring(total.indexOf("SUCCESS") + 7, total.indexOf("DETAILS TO COPY, PASTE")).trim();
                 // Now do processing
                 total = total.substring(total.indexOf("Dear PUC"), total.indexOf("cumulative rate changes.")) + total.substring(total.indexOf("AL 510: WE WANT MORE"), total.indexOf("gouging of the consumer.")) + total.substring(total.indexOf("In my opinion, SJWC"), total.indexOf("blatant gouging by San Jose Water Company."));
 
                 in.close();
                 return total;
             } catch (IOException ioe) {
-                Log.d(TAG, ioe.getMessage());
+                sendSMS("SaratogaWater: " + ioe.getMessage());
             }
             return null;
         }
 
         @Override
         protected void onPostExecute(String s) {
-            Log.d(TAG, "Executed");
             details = s;
             scrollableDialog(s);
         }
 
         private void scrollableDialog(String message) {
             AlertDialog.Builder ad = new AlertDialog.Builder(contextRef.get());
-            ad.setTitle("Specifics");
+            ad.setTitle("Details");
             View v = LayoutInflater.from(contextRef.get()).inflate(R.layout.details_dialog, null);
             TextView text = v.findViewById(R.id.detailsText);
             text.setText(message);
@@ -325,5 +328,4 @@ public class MainActivity extends AppCompatActivity {
             dialog = ad.create();
         }
     }
-    //TODO: Add graphics hyperlink
 }

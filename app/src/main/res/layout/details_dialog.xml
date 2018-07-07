@@ -16,7 +16,6 @@
             android:id="@+id/detailsText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/details"
             android:paddingLeft="10dp"
             android:paddingRight="10dp"/>
 
