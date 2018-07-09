@@ -44,6 +44,9 @@ public class MainActivity extends AppCompatActivity {
     private static String details = "";
     private static String summary_docs = "";
     private static String success_docs = "";
+    private static String email_TO = "";
+    private static String email_CC = "";
+    private static String email_SUBJECT = "";
 
     private static Dialog dialog;
 
@@ -104,10 +107,10 @@ public class MainActivity extends AppCompatActivity {
                 // All fields are filled, can send email
                 Intent i = new Intent(Intent.ACTION_SEND);
                 i.setType("message/rfc822");
-                i.putExtra(Intent.EXTRA_EMAIL, parseEmails(true));
-                i.putExtra(Intent.EXTRA_CC, parseEmails(false));
+                i.putExtra(Intent.EXTRA_EMAIL, email_TO.split(","));
+                i.putExtra(Intent.EXTRA_CC, email_CC.split(","));
                 i.putExtra(Intent.EXTRA_BCC, new String[] {u_email});
-                i.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.email_subject));
+                i.putExtra(Intent.EXTRA_SUBJECT, email_SUBJECT);
 
                 String emailText = details;
                 String extras = "\n\nRegards,\n" + u_name + "\n" + u_email + "\n" + u_address + "\n";
@@ -131,21 +134,7 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(text);
         builder.setCancelable(true);
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-
-            }
-        });
-        return builder.create();
-    }
-
-    private Dialog alertUser(int textId) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage(textId);
-        builder.setCancelable(true);
-        builder.setTitle("Summary");
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+        builder.setNegativeButton("Ok", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
 
@@ -188,16 +177,6 @@ public class MainActivity extends AppCompatActivity {
         textView.setHighlightColor(Color.TRANSPARENT);
     }
 
-    private String[] parseEmails(boolean emails_TO) {
-        String email;
-        if(emails_TO) {
-            email = getString(R.string.emails_TO);
-        } else {
-            email = getString(R.string.emails_CC);
-        }
-        return email.split(",");
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         try {
@@ -212,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
 
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(this).setTitle("Success!").setCancelable(true).setView(v);
-                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                builder.setNegativeButton("Ok", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
 
@@ -280,17 +259,16 @@ public class MainActivity extends AppCompatActivity {
                     }
                     if(str.trim().contains("·")) {
                         str = str.substring(0, str.indexOf("·")) + "\n\t" + str.substring(str.indexOf("·"));
-                    }/*
-                    if(str.trim().contains(":")) {
-                        str = str.substring(0, str.indexOf(":")) + "\n" + str.substring(str.indexOf(":"));
-                    }*/
-                    /*if(str.trim().contains("."))*/ //TODO: Find regex for this
+                    }
                     total += str;
                 }
 
                 summary_docs = total.substring(total.indexOf("SUMMARY") + 17, total.indexOf("SUCCESS")).trim();
                 success_docs = total.substring(total.indexOf("SUCCESS") + 7, total.indexOf("DETAILS TO COPY, PASTE")).trim();
                 // Now do processing
+                email_TO = total.substring(total.indexOf("EMAIL:") + 6, total.indexOf("CC:")).trim();
+                email_CC = total.substring(total.indexOf("CC:") + 3, total.indexOf("SUBJECT:")).trim();
+                email_SUBJECT = total.substring(total.indexOf("SUBJECT:") + 8, total.indexOf("Dear PUC President Picker and Commissioners,")).trim();
                 total = total.substring(total.indexOf("Dear PUC"), total.indexOf("cumulative rate changes.")) + total.substring(total.indexOf("AL 510: WE WANT MORE"), total.indexOf("gouging of the consumer.")) + total.substring(total.indexOf("In my opinion, SJWC"), total.indexOf("blatant gouging by San Jose Water Company."));
 
                 in.close();
@@ -319,13 +297,23 @@ public class MainActivity extends AppCompatActivity {
             text.setLinkTextColor(Color.BLUE);
             ad.setView(v);
             ad.setCancelable(true);
-            ad.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            ad.setNegativeButton("Ok", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
 
                 }
             });
             dialog = ad.create();
+        }
+
+        private int getMatchIndex(String text, String regex) {
+            Pattern pattern = Pattern.compile(regex);
+            Matcher matcher = pattern.matcher(text);
+
+            if(matcher.find()) {
+                return matcher.start();
+            }
+            return -1;
         }
     }
 }

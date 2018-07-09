@@ -1,16 +1,5 @@
 <resources>
     <string name="app_name">Stop Water Rate Increases</string>
-
-    <string name="emails_TO">water_division@cpuc.ca.gov, public.advisor@cpuc.ca.gov, ora@cpuc.ca.gov, jb5@cpuc.ca.gov</string>
-
-    <string name="emails_CC">senator.beall@senate.ca.gov, John.Baker@cpuc.ca.gov, matthew.marcus@cpuc.ca.gov, raminder.kahlon@cpuc.ca.gov,
-        tkm@cpuc.ca.gov, michael.picker@cpuc.ca.gov, elizabeth.podolinsky@cpuc.ca.gov, carla.peterman@cpuc.ca.gov,
-        liane.randolph@cpuc.ca.gov, rachel.peterson@cpuc.ca.gov, rkumar@saratoga.ca.us, lester.wong@cpuc.ca.gov,
-        martha.guzman-aceves@cpuc.ca.gov, michael.minkus@cpuc.ca.gov, clifford.rechtschaffen@cpuc.ca.gov, sean.Simon@cpuc.ca.gov,
-        allison.brown@cpuc.ca.gov, lolita.hajian@cpuc.ca.gov
-    </string>
-
     <string name="kumar_email">rkumar@saratoga.ca.us</string>
     <string name="ujjwal_email">ujjwal.krishnamurthi@gmail.com</string>
-    <string name="email_subject">AL 523 and GRC 18–01–004</string>
 </resources>
